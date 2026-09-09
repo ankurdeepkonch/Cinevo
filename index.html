@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#0f172a"
+    >
+
+    <meta
+        name="description"
+        content="A local PWA for tracking dramas across streaming platforms."
+    >
+
+    <link
+        rel="manifest"
+        href="manifest.json"
+    >
+
+    <link
+        rel="stylesheet"
+        href="styles.css"
+    >
+
+    <title>Drama Tree Tracker</title>
+
+</head>
+
+
+<body>
+
+    <!-- Main Application -->
+
+    <main class="app">
+
+        <!-- Top Bar -->
+
+        <header class="top-bar">
+
+            <!-- Library Dashboard -->
+
+            <button
+                id="libraryDashboard"
+                class="library-dashboard"
+                type="button"
+                aria-label="Open library statistics"
+            >
+
+                <span class="brand-icon">🌳</span>
+
+                <span class="library-summary">
+
+                    <strong>My Library</strong>
+
+                    <span id="libraryQuickStats">
+                        0 Platforms · 0 Dramas
+                    </span>
+
+                </span>
+
+            </button>
+
+
+            <!-- Menu -->
+
+            <button
+                id="menuButton"
+                class="icon-button menu-button"
+                type="button"
+                aria-label="Open platforms and dramas"
+                title="Open Library"
+            >
+                ☰
+            </button>
+
+        </header>
+
+
+        <!-- Center Glass Circle -->
+
+        <section class="search-orb">
+
+            <div class="orb-glow"></div>
+
+            <div class="search-content">
+
+                <div class="search-icon">
+                    🔎
+                </div>
+
+                <h1>Search Library</h1>
+
+                <p>
+                    Find your dramas across every platform.
+                </p>
+
+                <div class="search-box">
+
+                    <input
+                        id="searchInput"
+                        type="search"
+                        placeholder="Search dramas or platforms..."
+                        autocomplete="off"
+                        aria-label="Search library"
+                    >
+
+                    <button
+                        id="findButton"
+                        type="button"
+                    >
+                        Find
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =====================================================
+         LIBRARY STATISTICS MODAL
+         ===================================================== -->
+
+    <div
+        id="statsOverlay"
+        class="stats-overlay"
+        aria-hidden="true"
+    >
+
+        <section
+            id="statsModal"
+            class="stats-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="statsTitle"
+        >
+
+            <div class="stats-modal-header">
+
+                <div>
+
+                    <span class="stats-modal-icon">
+                        🌳
+                    </span>
+
+                    <div>
+                        <h2 id="statsTitle">
+                            My Library
+                        </h2>
+
+                        <p>
+                            Drama Tree Tracker
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <button
+                    id="closeStatsButton"
+                    class="small-icon-button close-button"
+                    type="button"
+                    aria-label="Close statistics"
+                >
+                    ✕
+                </button>
+
+            </div>
+
+
+            <div class="stats-grid">
+
+                <div class="stat-card">
+                    <span class="stat-icon">🌳</span>
+                    <span class="stat-value" id="statPlatforms">0</span>
+                    <span class="stat-label">Platforms</span>
+                </div>
+
+
+                <div class="stat-card">
+                    <span class="stat-icon">🎬</span>
+                    <span class="stat-value" id="statDramas">0</span>
+                    <span class="stat-label">Dramas</span>
+                </div>
+
+
+                <div class="stat-card">
+                    <span class="stat-icon">✅</span>
+                    <span class="stat-value" id="statWatched">0</span>
+                    <span class="stat-label">Watched</span>
+                </div>
+
+
+                <div class="stat-card">
+                    <span class="stat-icon">⭐</span>
+                    <span class="stat-value" id="statRating">—</span>
+                    <span class="stat-label">Avg. Rating</span>
+                </div>
+
+            </div>
+
+
+            <div class="library-info">
+
+                <div class="info-row">
+
+                    <span>📌 Priority</span>
+
+                    <strong id="statPriority">
+                        None
+                    </strong>
+
+                </div>
+
+
+                <div class="info-row">
+
+                    <span>⏳ Subscription</span>
+
+                    <strong id="statSubscription">
+                        None
+                    </strong>
+
+                </div>
+
+
+                <div class="info-row">
+
+                    <span>📅 Version</span>
+
+                    <strong>v1.0</strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="stats-footer">
+                Your data is stored locally on this device.
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <!-- =====================================================
+         SIDEBAR OVERLAY
+         ===================================================== -->
+
+    <div
+        id="sidebarOverlay"
+        class="sidebar-overlay"
+        aria-hidden="true"
+    ></div>
+
+
+    <!-- =====================================================
+         RIGHT SIDEBAR
+         ===================================================== -->
+
+    <aside
+        id="sidebar"
+        class="sidebar"
+        aria-hidden="true"
+    >
+
+        <div class="sidebar-header">
+
+            <div>
+
+                <span class="sidebar-title-icon">
+                    🌲
+                </span>
+
+                <h2>
+                    Platforms &amp; Dramas
+                </h2>
+
+            </div>
+
+
+            <div class="sidebar-actions">
+
+                <button
+                    id="addPlatformButton"
+                    class="small-icon-button"
+                    type="button"
+                    title="Add platform"
+                    aria-label="Add platform"
+                >
+                    +
+                </button>
+
+
+                <button
+                    id="closeSidebarButton"
+                    class="small-icon-button close-button"
+                    type="button"
+                    title="Close"
+                    aria-label="Close sidebar"
+                >
+                    ✕
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- Add Platform -->
+
+        <form
+            id="platformForm"
+            class="inline-form hidden"
+        >
+
+            <input
+                id="platformNameInput"
+                type="text"
+                placeholder="Platform name"
+                maxlength="60"
+                autocomplete="off"
+                required
+            >
+
+            <button type="submit">
+                Save
+            </button>
+
+        </form>
+
+
+        <!-- Search Status -->
+
+        <div
+            id="searchStatus"
+            class="search-status hidden"
+        ></div>
+
+
+        <!-- Tree -->
+
+        <div
+            id="treeContainer"
+            class="tree-container"
+        ></div>
+
+
+        <!-- Empty -->
+
+        <div
+            id="emptyState"
+            class="empty-state"
+        >
+
+            <div class="empty-icon">
+                🌱
+            </div>
+
+            <h3>
+                Your library is empty
+            </h3>
+
+            <p>
+                Add a platform using the
+                <strong>+</strong>
+                button above.
+            </p>
+
+        </div>
+
+    </aside>
+
+
+    <script src="app.js"></script>
+
+</body>
+
+</html>
