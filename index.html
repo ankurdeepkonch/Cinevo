@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -12,7 +11,7 @@
 
     <meta
         name="theme-color"
-        content="#0f172a"
+        content="#f8f9f7"
     >
 
     <meta
@@ -31,21 +30,13 @@
     >
 
     <title>Drama Tree Tracker</title>
-
 </head>
-
 
 <body>
 
-    <!-- Main Application -->
-
     <main class="app">
 
-        <!-- Top Bar -->
-
         <header class="top-bar">
-
-            <!-- Library Dashboard -->
 
             <button
                 id="libraryDashboard"
@@ -53,23 +44,16 @@
                 type="button"
                 aria-label="Open library statistics"
             >
-
                 <span class="brand-icon">🌳</span>
 
                 <span class="library-summary">
-
                     <strong>My Library</strong>
 
                     <span id="libraryQuickStats">
                         0 Platforms · 0 Dramas
                     </span>
-
                 </span>
-
             </button>
-
-
-            <!-- Menu -->
 
             <button
                 id="menuButton"
@@ -84,53 +68,70 @@
         </header>
 
 
-        <!-- Center Glass Circle -->
+        <!-- =====================================================
+             MAIN SEARCH EXPERIENCE
+             ===================================================== -->
+        <section class="search-stage" aria-label="Search library">
 
-        <section class="search-orb">
+            <div class="ambient ambient-one"></div>
+            <div class="ambient ambient-two"></div>
 
-            <div class="orb-glow"></div>
+            <!-- Clean stars only -->
+            <span class="search-spark spark-one" aria-hidden="true">✦</span>
+            <span class="search-spark spark-two" aria-hidden="true">✦</span>
 
-            <div class="search-content">
+            <section class="search-orb">
+                <div class="orb-highlight"></div>
+                <div class="orb-inner-glow"></div>
 
-                <div class="search-icon">
-                    🔎
+                <div class="search-content">
+
+                    <div class="search-icon" aria-hidden="true">
+                        <svg viewBox="0 0 64 64" role="img">
+                            <circle cx="28" cy="28" r="15" class="search-glass-circle"></circle>
+                            <path d="M39.5 39.5L52 52" class="search-glass-handle"></path>
+                        </svg>
+                    </div>
+
+                    <h1>Search Library</h1>
+
+                    <p>
+                        Find your dramas across every platform.
+                    </p>
+
+                    <div class="search-box">
+                        <span class="search-field-icon" aria-hidden="true">
+                            <svg viewBox="0 0 32 32" role="img">
+                                <circle cx="13.5" cy="13.5" r="8" class="search-field-circle"></circle>
+                                <path d="M19.5 19.5L26 26" class="search-field-handle"></path>
+                            </svg>
+                        </span>
+
+                        <input
+                            id="searchInput"
+                            type="search"
+                            placeholder="Search dramas or platforms..."
+                            autocomplete="off"
+                            aria-label="Search library"
+                        >
+
+                        <button
+                            id="findButton"
+                            type="button"
+                        >
+                            <span>Find</span>
+                            <span class="find-arrow" aria-hidden="true">→</span>
+                        </button>
+                    </div>
+
                 </div>
-
-                <h1>Search Library</h1>
-
-                <p>
-                    Find your dramas across every platform.
-                </p>
-
-                <div class="search-box">
-
-                    <input
-                        id="searchInput"
-                        type="search"
-                        placeholder="Search dramas or platforms..."
-                        autocomplete="off"
-                        aria-label="Search library"
-                    >
-
-                    <button
-                        id="findButton"
-                        type="button"
-                    >
-                        Find
-                    </button>
-
-                </div>
-
-            </div>
-
+            </section>
         </section>
 
     </main>
 
 
-    <!-- =====================================================
-         LIBRARY STATISTICS MODAL
-         ===================================================== -->
+    <!-- LIBRARY STATISTICS MODAL -->
 
     <div
         id="statsOverlay"
@@ -148,7 +149,7 @@
 
             <div class="stats-modal-header">
 
-                <div>
+                <div class="stats-heading">
 
                     <span class="stats-modal-icon">
                         🌳
@@ -165,7 +166,6 @@
                     </div>
 
                 </div>
-
 
                 <button
                     id="closeStatsButton"
@@ -187,20 +187,17 @@
                     <span class="stat-label">Platforms</span>
                 </div>
 
-
                 <div class="stat-card">
                     <span class="stat-icon">🎬</span>
                     <span class="stat-value" id="statDramas">0</span>
                     <span class="stat-label">Dramas</span>
                 </div>
 
-
                 <div class="stat-card">
                     <span class="stat-icon">✅</span>
                     <span class="stat-value" id="statWatched">0</span>
                     <span class="stat-label">Watched</span>
                 </div>
-
 
                 <div class="stat-card">
                     <span class="stat-icon">⭐</span>
@@ -214,33 +211,25 @@
             <div class="library-info">
 
                 <div class="info-row">
-
                     <span>📌 Priority</span>
 
                     <strong id="statPriority">
                         None
                     </strong>
-
                 </div>
 
-
                 <div class="info-row">
-
                     <span>⏳ Subscription</span>
 
                     <strong id="statSubscription">
                         None
                     </strong>
-
                 </div>
 
-
                 <div class="info-row">
-
                     <span>📅 Version</span>
 
                     <strong>v1.0</strong>
-
                 </div>
 
             </div>
@@ -255,9 +244,7 @@
     </div>
 
 
-    <!-- =====================================================
-         SIDEBAR OVERLAY
-         ===================================================== -->
+    <!-- SIDEBAR OVERLAY -->
 
     <div
         id="sidebarOverlay"
@@ -266,9 +253,7 @@
     ></div>
 
 
-    <!-- =====================================================
-         RIGHT SIDEBAR
-         ===================================================== -->
+    <!-- RIGHT SIDEBAR -->
 
     <aside
         id="sidebar"
@@ -278,7 +263,7 @@
 
         <div class="sidebar-header">
 
-            <div>
+            <div class="sidebar-heading">
 
                 <span class="sidebar-title-icon">
                     🌲
@@ -289,7 +274,6 @@
                 </h2>
 
             </div>
-
 
             <div class="sidebar-actions">
 
@@ -302,7 +286,6 @@
                 >
                     +
                 </button>
-
 
                 <button
                     id="closeSidebarButton"
@@ -318,8 +301,6 @@
 
         </div>
 
-
-        <!-- Add Platform -->
 
         <form
             id="platformForm"
@@ -342,23 +323,17 @@
         </form>
 
 
-        <!-- Search Status -->
-
         <div
             id="searchStatus"
             class="search-status hidden"
         ></div>
 
 
-        <!-- Tree -->
-
         <div
             id="treeContainer"
             class="tree-container"
         ></div>
 
-
-        <!-- Empty -->
 
         <div
             id="emptyState"
