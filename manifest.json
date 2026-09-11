@@ -1,7 +1,7 @@
 {
-    "name": "Movie Tracker",
-    "short_name": "Movie Tracker",
-    "description": "A local PWA for tracking dramas across streaming platforms.",
+    "name": "Cinevo",
+    "short_name": "Cinevo",
+    "description": "A personal movie and drama library",
     "start_url": "./index.html",
     "scope": "./",
     "display": "standalone",
