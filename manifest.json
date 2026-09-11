@@ -1,6 +1,6 @@
 {
-    "name": "Drama Tree Tracker",
-    "short_name": "Drama Tree",
+    "name": "Movie Tracker",
+    "short_name": "Movie Tracker",
     "description": "A local PWA for tracking dramas across streaming platforms.",
     "start_url": "./index.html",
     "scope": "./",
