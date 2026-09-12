@@ -1742,6 +1742,78 @@ summary::-webkit-details-marker {
 }
 
 
+/* notunnnnnnnnnnnnnnnnnnnnnnnnnn */
+
+/* =====================================================
+    PROFILE MENU & LOGIN POPUP
+    ===================================================== */
+    .profile-menu {
+    position: relative;
+    display: flex;
+    align-items: center;
+    pointer-events: auto; /* This makes it clickable! */
+    }
+
+    #profile-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    object-fit: cover;
+    border: 2px solid #dadce0;
+    }
+
+    #profile-popup {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background-color: white;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    width: max-content;
+    z-index: 999;
+    }
+
+    .google-sync-btn {
+    background-color: white;
+    color: #3c4043;
+    border: 1px solid #dadce0;
+    padding: 10px 16px;
+    border-radius: 4px;
+    font-family: sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    
+    /* These 3 lines perfectly align the icon and text */
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    }
+
+    .logout-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
 /* =========================================================
    REDUCED MOTION
    ========================================================= */
