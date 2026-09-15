@@ -1,14 +1,11 @@
 /* =========================================================
    DRAMA TREE TRACKER
-   Service Worker
+   Service Worker (Bumped to v2)
    ========================================================= */
 
 "use strict";
 
-
-const CACHE_NAME =
-    "drama-tree-tracker-v1";
-
+const CACHE_NAME = "drama-tree-tracker-v2";
 
 const ASSETS_TO_CACHE = [
     "./",
@@ -18,150 +15,40 @@ const ASSETS_TO_CACHE = [
     "./manifest.json"
 ];
 
+self.addEventListener("install", event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => cache.addAll(ASSETS_TO_CACHE))
+            .then(() => self.skipWaiting())
+    );
+});
 
-/* =========================================================
-   INSTALL
-   ========================================================= */
+self.addEventListener("activate", event => {
+    event.waitUntil(
+        caches.keys()
+            .then(cacheNames => Promise.all(
+                cacheNames
+                    .filter(cacheName => cacheName !== CACHE_NAME)
+                    .map(cacheName => caches.delete(cacheName))
+            ))
+            .then(() => self.clients.claim())
+    );
+});
 
-self.addEventListener(
-    "install",
-    event => {
+self.addEventListener("fetch", event => {
+    if (event.request.method !== "GET") return;
 
-        event.waitUntil(
+    event.respondWith(
+        caches.match(event.request).then(cachedResponse => {
+            if (cachedResponse) return cachedResponse;
 
-            caches.open(
-                CACHE_NAME
-            )
-            .then(
-                cache =>
-                    cache.addAll(
-                        ASSETS_TO_CACHE
-                    )
-            )
-            .then(
-                () =>
-                    self.skipWaiting()
-            )
-
-        );
-    }
-);
-
-
-/* =========================================================
-   ACTIVATE
-   ========================================================= */
-
-self.addEventListener(
-    "activate",
-    event => {
-
-        event.waitUntil(
-
-            caches.keys()
-                .then(
-                    cacheNames =>
-                        Promise.all(
-
-                            cacheNames
-                                .filter(
-                                    cacheName =>
-                                        cacheName !==
-                                        CACHE_NAME
-                                )
-                                .map(
-                                    cacheName =>
-                                        caches.delete(
-                                            cacheName
-                                        )
-                                )
-
-                        )
-                )
-                .then(
-                    () =>
-                        self.clients.claim()
-                )
-
-        );
-    }
-);
-
-
-/* =========================================================
-   FETCH
-   ========================================================= */
-
-self.addEventListener(
-    "fetch",
-    event => {
-
-        /*
-         * Only handle GET requests.
-         */
-
-        if (
-            event.request.method !== "GET"
-        ) {
-            return;
-        }
-
-
-        event.respondWith(
-
-            caches.match(
-                event.request
-            )
-            .then(
-                cachedResponse => {
-
-                    if (cachedResponse) {
-                        return cachedResponse;
-                    }
-
-
-                    return fetch(
-                        event.request
-                    )
-                    .then(
-                        networkResponse => {
-
-                            /*
-                             * Cache successful same-origin
-                             * responses dynamically.
-                             */
-
-                            if (
-                                networkResponse &&
-                                networkResponse.status === 200 &&
-                                networkResponse.type === "basic"
-                            ) {
-
-                                const responseClone =
-                                    networkResponse.clone();
-
-                                caches.open(
-                                    CACHE_NAME
-                                )
-                                .then(
-                                    cache => {
-
-                                        cache.put(
-                                            event.request,
-                                            responseClone
-                                        );
-                                    }
-                                );
-                            }
-
-
-                            return networkResponse;
-                        }
-                    );
-
+            return fetch(event.request).then(networkResponse => {
+                if (networkResponse && networkResponse.status === 200 && networkResponse.type === "basic") {
+                    const clone = networkResponse.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
                 }
-            )
-
-        );
-    }
-);
+                return networkResponse;
+            });
+        })
+    );
+});

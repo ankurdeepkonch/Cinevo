@@ -389,28 +389,83 @@
 
     <script src="app.js"></script>
 
-    <!-- FIREBASE SCRIPT ADDED HERE -->
+    <!-- FIREBASE AUTH + FIRESTORE INITIALIZATION -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-      
+
+        import {
+            getAuth,
+            signInWithPopup,
+            GoogleAuthProvider,
+            onAuthStateChanged,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+
+        import {
+            getFirestore,
+            doc,
+            getDoc,
+            setDoc,
+            onSnapshot,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+
+        /* =====================================================
+           FIREBASE CONFIG
+           ===================================================== */
+
         const firebaseConfig = {
-          apiKey: "AIzaSyBMLdBTcSmCfkLkzCNJ7D_aD9cIrxO0gJI",
-          authDomain: "cinevo-by-adk.firebaseapp.com",
-          projectId: "cinevo-by-adk",
-          storageBucket: "cinevo-by-adk.firebasestorage.app",
-          messagingSenderId: "227229169014",
-          appId: "1:227229169014:web:dec5a80620541643583657",
-          measurementId: "G-MLEFKN1K8K"
+            apiKey: "AIzaSyBMLdBTcSmCfkLkzCNJ7D_aD9cIrxO0gJI",
+            authDomain: "cinevo-by-adk.firebaseapp.com",
+            projectId: "cinevo-by-adk",
+            storageBucket: "cinevo-by-adk.firebasestorage.app",
+            messagingSenderId: "227229169014",
+            appId: "1:227229169014:web:dec5a80620541643583657",
+            measurementId: "G-MLEFKN1K8K"
         };
-      
+
+
+        /* =====================================================
+           INITIALIZE FIREBASE
+           ===================================================== */
+
         const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        
         const auth = getAuth(app);
+        const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
-      
+
+
+        /* =====================================================
+           EXPOSE FIREBASE SERVICES TO app.js
+           ===================================================== */
+
+        window.cinevoFirebase = {
+            auth,
+            db,
+            provider,
+            getDoc,
+            setDoc,
+            doc,
+            onSnapshot,
+            serverTimestamp,
+            signInWithPopup,
+            signOut,
+            onAuthStateChanged
+        };
+
+        /* Tell app.js that Firebase services are ready. */
+        window.cinevoFirebaseReady = true;
+
+        window.dispatchEvent(
+            new CustomEvent("cinevo-firebase-ready")
+        );
+
+
+        /* =====================================================
+           PROFILE UI
+           ===================================================== */
+
         const profileIcon = document.getElementById("profile-icon");
         const profilePopup = document.getElementById("profile-popup");
         const loggedOutView = document.getElementById("logged-out-view");
@@ -418,32 +473,81 @@
         const loginBtn = document.getElementById("login-btn");
         const logoutBtn = document.getElementById("logout-btn");
         const userGreeting = document.getElementById("user-greeting");
-      
+
+        const defaultProfileImage =
+            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png";
+
+
         profileIcon.addEventListener("click", () => {
-          profilePopup.style.display = profilePopup.style.display === "none" || profilePopup.style.display === "" ? "block" : "none";
+            profilePopup.style.display =
+                profilePopup.style.display === "none" ||
+                profilePopup.style.display === ""
+                    ? "block"
+                    : "none";
         });
-      
-        loginBtn.addEventListener("click", () => {
-          signInWithPopup(auth, provider).catch((error) => console.error(error));
+
+
+        /* =====================================================
+           GOOGLE SIGN-IN
+           ===================================================== */
+
+        loginBtn.addEventListener("click", async () => {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Google Sign-In Error:", error);
+            }
         });
-      
-        logoutBtn.addEventListener("click", () => {
-          signOut(auth);
+
+
+        /* =====================================================
+           GOOGLE SIGN-OUT
+           ===================================================== */
+
+        logoutBtn.addEventListener("click", async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Google Sign-Out Error:", error);
+            }
         });
-      
+
+
+        /* =====================================================
+           AUTH STATE
+
+           app.js listens for this event and handles the
+           Firestore library synchronization.
+           ===================================================== */
+
         onAuthStateChanged(auth, (user) => {
-          if (user) {
-            profileIcon.src = user.photoURL; 
-            userGreeting.innerText = `Hi, ${user.displayName}`;
-            loggedOutView.style.display = "none";
-            loggedInView.style.display = "block";
-          } else {
-            profileIcon.src = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png"; 
-            loggedOutView.style.display = "block";
-            loggedInView.style.display = "none";
-          }
+            window.cinevoCurrentUser = user || null;
+
+            if (user) {
+                profileIcon.src =
+                    user.photoURL || defaultProfileImage;
+
+                userGreeting.textContent =
+                    `Hi, ${user.displayName || "there"}`;
+
+                loggedOutView.style.display = "none";
+                loggedInView.style.display = "block";
+            } else {
+                profileIcon.src = defaultProfileImage;
+
+                loggedOutView.style.display = "block";
+                loggedInView.style.display = "none";
+            }
+
+            window.dispatchEvent(
+                new CustomEvent("cinevo-auth-changed", {
+                    detail: {
+                        user: user || null
+                    }
+                })
+            );
         });
-      </script>
+    </script>
 
 </body>
 
