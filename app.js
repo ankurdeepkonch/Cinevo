@@ -1,6 +1,6 @@
 /* =========================================================
    CINEVO / DRAMA TREE TRACKER
-   Firebase Firestore Realtime Cloud Sync (Unified)
+   Firebase Firestore Realtime Cloud Sync (Anti-Echo Fix)
    ========================================================= */
 
 "use strict";
@@ -112,7 +112,6 @@ function loadLibrary() {
             return normalizeLibrary(anonymousData);
         }
 
-        // Backward compatibility: check legacy key
         const oldData = readCinevoStorage(STORAGE_KEY);
         if (oldData && isValidLibrary(oldData)) {
             const normalized = normalizeLibrary(oldData);
@@ -230,7 +229,6 @@ async function startCinevoCloudSync(user) {
                 console.log("Cinevo library loaded from Firestore.");
             }
         } else {
-            // First time sign in: migrate local library
             const localAccountLibrary = readCinevoStorage(getCinevoUserStorageKey(user.uid)) ||
                                         readCinevoStorage(CINEVO_ANONYMOUS_STORAGE_KEY) ||
                                         loadLibrary();
@@ -251,7 +249,6 @@ async function startCinevoCloudSync(user) {
 
             renderTree(searchInput.value.trim());
             updateLibraryDashboard();
-            console.log("First-time library uploaded to Firestore.");
         }
 
         localStorage.setItem(CINEVO_LAST_UID_KEY, user.uid);
@@ -267,6 +264,20 @@ async function startCinevoCloudSync(user) {
                 const cloudData = cloudSnapshot.data();
                 if (!cloudData.library || !isValidLibrary(cloudData.library)) return;
 
+                // ====================================================
+                // THE ANTI-ECHO FIX: 
+                // Check if incoming cloud data matches our local data
+                // ====================================================
+                const incomingDataString = JSON.stringify(normalizeLibrary(cloudData.library));
+                const currentDataString = JSON.stringify(normalizeLibrary(library));
+
+                if (incomingDataString === currentDataString) {
+                    // Data is identical! This is just our own echo. 
+                    // Do not redraw the screen. Stop the folders from snapping.
+                    return; 
+                }
+
+                // If data IS different (edited on another device), we update and redraw.
                 library = normalizeLibrary(cloudData.library);
                 writeCinevoStorage(getCinevoUserStorageKey(user.uid), library);
                 renderTree(searchInput.value.trim());
@@ -295,7 +306,6 @@ function stopCinevoCloudSync() {
     cinevoCloudUser = null;
     cinevoCloudReady = false;
 
-    // Switch back to anonymous/local data
     library = readCinevoStorage(CINEVO_ANONYMOUS_STORAGE_KEY) || createDefaultLibrary();
     renderTree(searchInput.value.trim());
     updateLibraryDashboard();
@@ -682,6 +692,7 @@ function createPlatformElement(platform, matchingDramas, query) {
 function createDramaElement(platform, drama, query) {
     const details = document.createElement("details");
     details.className = "drama-details";
+    details.dataset.dramaId = drama.id; 
     if (query) details.open = true;
 
     const summary = document.createElement("summary");
@@ -823,6 +834,18 @@ function filterLibrary(query) {
 }
 
 function renderTree(query = "") {
+    const openPlatforms = new Set();
+    const openDramas = new Set();
+
+    if (treeContainer) {
+        treeContainer.querySelectorAll('.platform-details[open]').forEach(el => {
+            if (el.dataset.platformId) openPlatforms.add(el.dataset.platformId);
+        });
+        treeContainer.querySelectorAll('.drama-details[open]').forEach(el => {
+            if (el.dataset.dramaId) openDramas.add(el.dataset.dramaId);
+        });
+    }
+
     treeContainer.innerHTML = "";
     const results = filterLibrary(query);
 
@@ -862,8 +885,21 @@ function renderTree(query = "") {
     });
 
     sortedResults.forEach(res => {
-        treeContainer.appendChild(createPlatformElement(res.platform, res.matchingDramas, query));
+        const platformEl = createPlatformElement(res.platform, res.matchingDramas, query);
+        
+        if (!query && openPlatforms.has(res.platform.id)) {
+            platformEl.open = true;
+        }
+        
+        treeContainer.appendChild(platformEl);
     });
+
+    if (!query) {
+        openDramas.forEach(dramaId => {
+            const dramaEl = treeContainer.querySelector(`.drama-details[data-drama-id="${CSS.escape(dramaId)}"]`);
+            if (dramaEl) dramaEl.open = true;
+        });
+    }
 }
 
 function getLibraryStatistics() {
