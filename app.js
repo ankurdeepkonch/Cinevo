@@ -1,6 +1,6 @@
 /* =========================================================
    CINEVO / DRAMA TREE TRACKER
-   Firebase Firestore Realtime Cloud Sync (Anti-Echo Fix)
+   Firebase Firestore Realtime Cloud Sync (Bulletproof Fix)
    ========================================================= */
 
 "use strict";
@@ -51,6 +51,10 @@ let cinevoCloudReady = false;
 let cinevoCloudUnsubscribe = null;
 let cinevoCloudSaveTimer = null;
 let cinevoCloudSyncToken = 0;
+
+// The Anti-Echo & Deadlock Safety Flags
+let isSyncingFromCloud = false;
+let lastLocalSaveStr = null;
 
 function getCinevoUserStorageKey(uid) {
     return `${CINEVO_USER_STORAGE_PREFIX}${uid}`;
@@ -140,37 +144,32 @@ function saveCinevoLocalLibrary(data = library) {
     }
 }
 
-async function saveCinevoCloudLibrary() {
-    if (!cinevoCloudUser?.uid || !cinevoCloudReady || !window.cinevoFirebase) {
-        return;
-    }
-
-    try {
-        const { db, doc, setDoc, serverTimestamp } = window.cinevoFirebase;
-        const userRef = doc(db, "users", cinevoCloudUser.uid);
-
-        await setDoc(
-            userRef,
-            {
-                library: normalizeLibrary(library),
-                updatedAt: serverTimestamp ? serverTimestamp() : new Date().toISOString()
-            },
-            { merge: true }
-        );
-        console.log("Cinevo library synced to Firestore.");
-    } catch (error) {
-        console.error("Firestore sync error:", error);
-    }
-}
-
 function queueCinevoCloudSave() {
-    if (!cinevoCloudUser?.uid || !cinevoCloudReady) {
+    if (!cinevoCloudUser?.uid || !cinevoCloudReady || isSyncingFromCloud) {
         return;
     }
 
     clearTimeout(cinevoCloudSaveTimer);
-    cinevoCloudSaveTimer = setTimeout(() => {
-        saveCinevoCloudLibrary();
+    cinevoCloudSaveTimer = setTimeout(async () => {
+        try {
+            const { db, doc, setDoc, serverTimestamp } = window.cinevoFirebase;
+            const userRef = doc(db, "users", cinevoCloudUser.uid);
+
+            const normalizedLib = normalizeLibrary(library);
+            lastLocalSaveStr = JSON.stringify(normalizedLib);
+
+            await setDoc(
+                userRef,
+                {
+                    library: normalizedLib,
+                    updatedAt: serverTimestamp ? serverTimestamp() : new Date().toISOString()
+                },
+                { merge: true }
+            );
+            console.log("Cinevo library synced to Firestore.");
+        } catch (error) {
+            console.error("Firestore sync error:", error);
+        }
     }, 250);
 }
 
@@ -178,7 +177,9 @@ function saveLibrary() {
     try {
         saveCinevoLocalLibrary(library);
         updateLibraryDashboard();
-        queueCinevoCloudSave();
+        if (!isSyncingFromCloud) {
+            queueCinevoCloudSave();
+        }
     } catch (error) {
         console.error("Could not save library:", error);
         alert("Could not save your library.");
@@ -222,11 +223,16 @@ async function startCinevoCloudSync(user) {
         if (snapshot.exists()) {
             const cloudData = snapshot.data();
             if (cloudData.library && isValidLibrary(cloudData.library)) {
-                library = normalizeLibrary(cloudData.library);
-                writeCinevoStorage(getCinevoUserStorageKey(user.uid), library);
-                renderTree(searchInput.value.trim());
-                updateLibraryDashboard();
-                console.log("Cinevo library loaded from Firestore.");
+                try {
+                    isSyncingFromCloud = true;
+                    library = normalizeLibrary(cloudData.library);
+                    writeCinevoStorage(getCinevoUserStorageKey(user.uid), library);
+                    renderTree(searchInput.value.trim());
+                    updateLibraryDashboard();
+                    console.log("Cinevo library loaded from Firestore.");
+                } finally {
+                    isSyncingFromCloud = false;
+                }
             }
         } else {
             const localAccountLibrary = readCinevoStorage(getCinevoUserStorageKey(user.uid)) ||
@@ -247,8 +253,13 @@ async function startCinevoCloudSync(user) {
                 { merge: true }
             );
 
-            renderTree(searchInput.value.trim());
-            updateLibraryDashboard();
+            try {
+                isSyncingFromCloud = true;
+                renderTree(searchInput.value.trim());
+                updateLibraryDashboard();
+            } finally {
+                isSyncingFromCloud = false;
+            }
         }
 
         localStorage.setItem(CINEVO_LAST_UID_KEY, user.uid);
@@ -264,24 +275,26 @@ async function startCinevoCloudSync(user) {
                 const cloudData = cloudSnapshot.data();
                 if (!cloudData.library || !isValidLibrary(cloudData.library)) return;
 
-                // ====================================================
-                // THE ANTI-ECHO FIX: 
-                // Check if incoming cloud data matches our local data
-                // ====================================================
-                const incomingDataString = JSON.stringify(normalizeLibrary(cloudData.library));
-                const currentDataString = JSON.stringify(normalizeLibrary(library));
+                const incomingLib = normalizeLibrary(cloudData.library);
+                const incomingStr = JSON.stringify(incomingLib);
+                const currentStr = JSON.stringify(normalizeLibrary(library));
 
-                if (incomingDataString === currentDataString) {
-                    // Data is identical! This is just our own echo. 
-                    // Do not redraw the screen. Stop the folders from snapping.
+                if (incomingStr === lastLocalSaveStr || incomingStr === currentStr) {
                     return; 
                 }
 
-                // If data IS different (edited on another device), we update and redraw.
-                library = normalizeLibrary(cloudData.library);
-                writeCinevoStorage(getCinevoUserStorageKey(user.uid), library);
-                renderTree(searchInput.value.trim());
-                updateLibraryDashboard();
+                try {
+                    isSyncingFromCloud = true;
+                    library = incomingLib;
+                    writeCinevoStorage(getCinevoUserStorageKey(user.uid), library);
+                    
+                    renderTree(searchInput.value.trim());
+                    updateLibraryDashboard();
+                } catch (e) {
+                    console.error("UI update from cloud failed:", e);
+                } finally {
+                    isSyncingFromCloud = false;
+                }
             },
             (error) => {
                 console.error("Firestore realtime sync listener error:", error);
@@ -555,7 +568,7 @@ function toggleDramaForm(platformId, platformDetails) {
         saveLibrary();
         renderTree(searchInput.value.trim());
 
-        const newPlatform = treeContainer.querySelector(`[data-platform-id="${CSS.escape(platformId)}"]`);
+        const newPlatform = treeContainer.querySelector(`[data-platform-id="${platformId}"]`);
         if (newPlatform) newPlatform.open = true;
     });
 
@@ -692,7 +705,7 @@ function createPlatformElement(platform, matchingDramas, query) {
 function createDramaElement(platform, drama, query) {
     const details = document.createElement("details");
     details.className = "drama-details";
-    details.dataset.dramaId = drama.id; 
+    details.dataset.dramaId = drama.id; // Identification tag for auto-open
     if (query) details.open = true;
 
     const summary = document.createElement("summary");
@@ -834,6 +847,7 @@ function filterLibrary(query) {
 }
 
 function renderTree(query = "") {
+    // 1. Memorize which folders are open
     const openPlatforms = new Set();
     const openDramas = new Set();
 
@@ -846,6 +860,7 @@ function renderTree(query = "") {
         });
     }
 
+    // 2. Clear UI
     treeContainer.innerHTML = "";
     const results = filterLibrary(query);
 
@@ -884,9 +899,11 @@ function renderTree(query = "") {
         return 0;
     });
 
+    // 3. Rebuild UI
     sortedResults.forEach(res => {
         const platformEl = createPlatformElement(res.platform, res.matchingDramas, query);
         
+        // Restore Platform Folder
         if (!query && openPlatforms.has(res.platform.id)) {
             platformEl.open = true;
         }
@@ -894,10 +911,16 @@ function renderTree(query = "") {
         treeContainer.appendChild(platformEl);
     });
 
+    // Restore Drama Folders securely
     if (!query) {
         openDramas.forEach(dramaId => {
-            const dramaEl = treeContainer.querySelector(`.drama-details[data-drama-id="${CSS.escape(dramaId)}"]`);
-            if (dramaEl) dramaEl.open = true;
+            try {
+                // querySelector without CSS.escape() to prevent mobile crashing
+                const dramaEl = treeContainer.querySelector(`.drama-details[data-drama-id="${dramaId}"]`);
+                if (dramaEl) dramaEl.open = true;
+            } catch (e) {
+                console.error("Failed to restore folder state:", e);
+            }
         });
     }
 }
