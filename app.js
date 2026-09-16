@@ -532,7 +532,7 @@ function toggleDramaForm(platformId, platformDetails) {
     form.className = "drama-form";
     form.innerHTML = `
         <input type="text" name="dramaName" placeholder="Drama Name" maxlength="120" autocomplete="off" required>
-        <input type="url" name="dramaUrl" placeholder="https://example.com/drama" autocomplete="off" required>
+        <input type="url" name="dramaUrl" placeholder="https://example.com/drama (Optional)" autocomplete="off">
         <button type="submit">Save Drama</button>
     `;
 
@@ -541,16 +541,20 @@ function toggleDramaForm(platformId, platformDetails) {
         event.preventDefault();
         const name = form.elements.dramaName.value.trim();
         const url = form.elements.dramaUrl.value.trim();
-        if (!name || !url) return;
+        
+        if (!name) return; // Name is still required
 
-        try {
-            const validUrl = new URL(url);
-            if (validUrl.protocol !== "http:" && validUrl.protocol !== "https:") {
-                throw new Error("Invalid URL");
+        // Only validate the URL if the user actually entered one
+        if (url !== "") {
+            try {
+                const validUrl = new URL(url);
+                if (validUrl.protocol !== "http:" && validUrl.protocol !== "https:") {
+                    throw new Error("Invalid URL");
+                }
+            } catch {
+                alert("Please enter a valid HTTP or HTTPS URL.");
+                return;
             }
-        } catch {
-            alert("Please enter a valid HTTP or HTTPS URL.");
-            return;
         }
 
         const platform = library.platforms.find(item => item.id === platformId);
@@ -747,13 +751,23 @@ function createDramaElement(platform, drama, query) {
     const stats = document.createElement("div");
     stats.className = "drama-stats";
 
-    const urlLink = document.createElement("a");
-    urlLink.className = "drama-url";
-    urlLink.href = drama.url;
-    urlLink.target = "_blank";
-    urlLink.rel = "noopener noreferrer";
-    urlLink.textContent = "🔗 Open Drama";
-    stats.appendChild(urlLink);
+    if (drama.url && drama.url.trim() !== "") {
+        const urlLink = document.createElement("a");
+        urlLink.className = "drama-url";
+        urlLink.href = drama.url;
+        urlLink.target = "_blank";
+        urlLink.rel = "noopener noreferrer";
+        urlLink.textContent = "🔗 Open Drama";
+        stats.appendChild(urlLink);
+    } else {
+        const noLink = document.createElement("span");
+        noLink.className = "drama-url";
+        noLink.style.color = "#92988f";
+        noLink.style.textDecoration = "none";
+        noLink.style.cursor = "default";
+        noLink.textContent = "No link yet";
+        stats.appendChild(noLink);
+    }
 
     const watchedRow = document.createElement("div");
     watchedRow.className = "drama-control-row";
