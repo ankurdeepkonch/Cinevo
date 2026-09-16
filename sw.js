@@ -5,7 +5,7 @@
 
 "use strict";
 
-const CACHE_NAME = "drama-tree-tracker-v4";
+const CACHE_NAME = "drama-tree-tracker-v5";
 
 const ASSETS_TO_CACHE = [
     "./",
