@@ -1,6 +1,6 @@
 # Cinevo - Movie & Drama Tracker
 
-A Progressive Web App designed to organize scattered movie and drama watchlists across multiple streaming platforms. Built to replace endless gallery screenshots, it features custom subscription countdowns, 5-star rating systems, and real-time cross-device data syncing via Google Firebase.
+A Progressive Web App designed to organize scattered movie and drama watchlists across multiple streaming platforms. Built to replace endless gallery screenshots, it features custom subscription countdowns, 5-star rating systems & real-time cross-device data syncing via Google Firebase.
 
 ## Features
 
