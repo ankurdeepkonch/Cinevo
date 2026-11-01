@@ -1,6 +1,6 @@
 # Cinevo - Movie & Drama Tracker
 
-A Progressive Web App (PWA) built to track, organize, and rate movie and drama watchlists across different streaming platforms with Google Cloud Sync.
+A Progressive Web App designed to organize scattered movie and drama watchlists across multiple streaming platforms. Built to replace endless gallery screenshots, it features custom subscription countdowns, 5-star rating systems, and real-time cross-device data syncing via Google Firebase.
 
 ## Features
 
